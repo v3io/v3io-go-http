@@ -2,16 +2,16 @@ package v3io
 
 import (
 	"github.com/valyala/fasthttp"
-	"github.com/nuclio/nuclio-sdk"
+	"github.com/nuclio/logger"
 )
 
 type SyncSession struct {
-	logger     nuclio.Logger
+	logger     logger.Logger
 	context    *SyncContext
 	sessionKey string
 }
 
-func newSyncSession(parentLogger nuclio.Logger,
+func newSyncSession(parentLogger logger.Logger,
 	context *SyncContext,
 	username string,
 	password string,

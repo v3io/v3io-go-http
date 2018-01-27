@@ -2,16 +2,16 @@ package v3io
 
 import (
 	"github.com/valyala/fasthttp"
-	"github.com/nuclio/nuclio-sdk"
+	"github.com/nuclio/logger"
 )
 
 type SyncContext struct {
-	logger     nuclio.Logger
+	logger     logger.Logger
 	httpClient *fasthttp.HostClient
 	clusterURL string
 }
 
-func newSyncContext(parentLogger nuclio.Logger, clusterURL string) (*SyncContext, error) {
+func newSyncContext(parentLogger logger.Logger, clusterURL string) (*SyncContext, error) {
 	newSyncContext := &SyncContext{
 		logger: parentLogger.GetChild("v3io"),
 		httpClient: &fasthttp.HostClient{

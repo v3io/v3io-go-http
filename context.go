@@ -2,17 +2,17 @@ package v3io
 
 import (
 	"github.com/pkg/errors"
-	"github.com/nuclio/nuclio-sdk"
+	"github.com/nuclio/logger"
 )
 
 type Context struct {
-	logger      nuclio.Logger
+	logger      logger.Logger
 	Sync        *SyncContext
 	requestChan chan *Request
 	numWorkers  int
 }
 
-func NewContext(parentLogger nuclio.Logger, clusterURL string, numWorkers int) (*Context, error) {
+func NewContext(parentLogger logger.Logger, clusterURL string, numWorkers int) (*Context, error) {
 	newSyncContext, err := newSyncContext(parentLogger, clusterURL)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to create sync context")

@@ -2,16 +2,16 @@ package v3io
 
 import (
 	"github.com/pkg/errors"
-	"github.com/nuclio/nuclio-sdk"
+	"github.com/nuclio/logger"
 )
 
 type Session struct {
 	Sync    *SyncSession
-	logger  nuclio.Logger
+	logger  logger.Logger
 	context *Context
 }
 
-func newSession(parentLogger nuclio.Logger,
+func newSession(parentLogger logger.Logger,
 	context *Context,
 	username string,
 	password string,

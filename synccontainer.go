@@ -13,7 +13,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
-	"github.com/nuclio/nuclio-sdk"
+	"github.com/nuclio/logger"
 )
 
 // function names
@@ -92,13 +92,13 @@ var seekShardsInputTypeToString = [...]string{
 }
 
 type SyncContainer struct {
-	logger    nuclio.Logger
+	logger    logger.Logger
 	session   *SyncSession
 	alias     string
 	uriPrefix string
 }
 
-func newSyncContainer(parentLogger nuclio.Logger, session *SyncSession, alias string) (*SyncContainer, error) {
+func newSyncContainer(parentLogger logger.Logger, session *SyncSession, alias string) (*SyncContainer, error) {
 	return &SyncContainer{
 		logger:    parentLogger.GetChild(alias),
 		session:   session,

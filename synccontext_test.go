@@ -5,9 +5,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/nuclio/nuclio/pkg/zap"
+	"github.com/nuclio/logger"
+	"github.com/nuclio/zap"
 	"github.com/stretchr/testify/suite"
-	"github.com/nuclio/nuclio-sdk"
 )
 
 //
@@ -16,7 +16,7 @@ import (
 
 type SyncContextTestSuite struct {
 	suite.Suite
-	logger    nuclio.Logger
+	logger    logger.Logger
 	context   *Context
 	session   *Session
 	container *Container

@@ -1,21 +1,22 @@
 package v3io
 
 import (
-	"github.com/nuclio/nuclio-sdk"
-	"github.com/pkg/errors"
 	"sync/atomic"
+
+	"github.com/nuclio/logger"
+	"github.com/pkg/errors"
 )
 
 // TODO: Request should have a global pool
 var requestID uint64 = 0
 
 type Container struct {
-	logger  nuclio.Logger
+	logger  logger.Logger
 	session *Session
 	Sync    *SyncContainer
 }
 
-func newContainer(parentLogger nuclio.Logger, session *Session, alias string) (*Container, error) {
+func newContainer(parentLogger logger.Logger, session *Session, alias string) (*Container, error) {
 	newSyncContainer, err := newSyncContainer(parentLogger, session.Sync, alias)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to create sync container")
