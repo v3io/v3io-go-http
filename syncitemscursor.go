@@ -3,6 +3,8 @@ package v3io
 import "github.com/pkg/errors"
 
 type SyncItemsCursor struct {
+	currentItem    Item
+	currentError   error
 	nextMarker     string
 	moreItemsExist bool
 	itemIndex      int
@@ -12,37 +14,49 @@ type SyncItemsCursor struct {
 	container      *SyncContainer
 }
 
-func newSyncItemsCursor(container *SyncContainer, input *GetItemsInput, response *Response) *SyncItemsCursor {
+func newSyncItemsCursor(container *SyncContainer, input *GetItemsInput) (*SyncItemsCursor, error) {
 	newSyncItemsCursor := &SyncItemsCursor{
 		container: container,
 		input:     input,
 	}
 
+	response, err := container.GetItems(input)
+	if err != nil {
+		return nil, err
+	}
+
 	newSyncItemsCursor.setResponse(response)
 
-	return newSyncItemsCursor
+	return newSyncItemsCursor, nil
 }
 
-// release a cursor and its underlying resources
+// Error returns the last error
+func (ic *SyncItemsCursor) Error() error {
+	return ic.currentError
+}
+
+// Release releases a cursor and its underlying resources
 func (ic *SyncItemsCursor) Release() {
 	ic.response.Release()
 }
 
-// get the next matching item. this may potentially block as this lazy loads items from the collection
-func (ic *SyncItemsCursor) Next() (*Item, error) {
+// Next gets the next matching item. this may potentially block as this lazy loads items from the collection
+func (ic *SyncItemsCursor) Next() (Item, error) {
 
 	// are there any more items left in the previous response we received?
 	if ic.itemIndex < len(ic.items) {
-		item := &ic.items[ic.itemIndex]
+		ic.currentItem = ic.items[ic.itemIndex]
+		ic.currentError = nil
 
 		// next time we'll give next item
 		ic.itemIndex++
 
-		return item, nil
+		return ic.currentItem, nil
 	}
 
 	// are there any more items up stream?
 	if !ic.moreItemsExist {
+		ic.currentError = nil
 		return nil, nil
 	}
 

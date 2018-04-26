@@ -27,13 +27,13 @@ func (suite *SyncContextTestSuite) SetupTest() {
 
 	suite.logger, err = nucliozap.NewNuclioZapTest("test")
 
-	suite.context, err = NewContext(suite.logger, "192.168.51.240:8081", 1)
+	suite.context, err = NewContext(suite.logger, "10.90.0.104:8081", 1)
 	suite.Require().NoError(err, "Failed to create context")
 
 	suite.session, err = suite.context.NewSession("iguazio", "iguazio", "iguazio")
 	suite.Require().NoError(err, "Failed to create session")
 
-	suite.container, err = suite.session.NewContainer("1024")
+	suite.container, err = suite.session.NewContainer("1")
 	suite.Require().NoError(err, "Failed to create container")
 }
 
@@ -231,8 +231,8 @@ func (suite *SyncContextEMDTestSuite) TestEMD() {
 
 func (suite *SyncContextEMDTestSuite) TestPutItems() {
 	items := map[string]map[string]interface{}{
-		"bob":    {"age": 42, "feature": "mustache"},
-		"linda":  {"age": 41, "feature": "singing"},
+		"bob":   {"age": 42, "feature": "mustache"},
+		"linda": {"age": 41, "feature": "singing"},
 	}
 
 	// get a specific bucket
@@ -257,9 +257,9 @@ func (suite *SyncContextEMDTestSuite) TestPutItems() {
 
 func (suite *SyncContextEMDTestSuite) TestPutItemsWithError() {
 	items := map[string]map[string]interface{}{
-		"bob":    {"age": 42, "feature": "mustache"},
-		"linda":  {"age": 41, "feature": "singing"},
-		"invalid":  {"__name": "foo", "feature": "singing"},
+		"bob":     {"age": 42, "feature": "mustache"},
+		"linda":   {"age": 41, "feature": "singing"},
+		"invalid": {"__name": "foo", "feature": "singing"},
 	}
 
 	// get a specific bucket
@@ -297,8 +297,23 @@ func (suite *SyncContextEMDTestSuite) verifyItems(items map[string]map[string]in
 	response, err := suite.container.Sync.GetItems(&getItemsInput)
 	suite.Require().NoError(err, "Failed to get items")
 
-	getItemsOutput := response.Output.(*GetItemsOutput)
-	suite.Require().Len(getItemsOutput.Items, len(items))
+	cursor, err := suite.container.Sync.GetItemsCursor(&getItemsInput)
+	suite.Require().NoError(err, "Failed to create cursor")
+
+	var receivedItems []Item
+
+	for {
+		item, err := cursor.Next()
+		suite.Require().NoError(err)
+
+		if item == nil {
+			break
+		}
+
+		receivedItems = append(receivedItems, *item)
+	}
+
+	suite.Require().Len(receivedItems, len(items))
 
 	// TODO: test values
 

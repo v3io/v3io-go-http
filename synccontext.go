@@ -1,8 +1,8 @@
 package v3io
 
 import (
-	"github.com/valyala/fasthttp"
 	"github.com/nuclio/logger"
+	"github.com/valyala/fasthttp"
 )
 
 type SyncContext struct {
@@ -27,7 +27,6 @@ func (sc *SyncContext) sendRequest(request *fasthttp.Request, response *fasthttp
 	sc.logger.DebugWith("Sending request",
 		"method", string(request.Header.Method()),
 		"uri", string(request.Header.RequestURI()),
-		// "headers", string(request.Header.Header()),
 		"body", string(request.Body()),
 	)
 

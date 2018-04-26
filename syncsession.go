@@ -1,8 +1,8 @@
 package v3io
 
 import (
-	"github.com/valyala/fasthttp"
 	"github.com/nuclio/logger"
+	"github.com/valyala/fasthttp"
 )
 
 type SyncSession struct {
