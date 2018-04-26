@@ -27,7 +27,7 @@ func (suite *SyncContextTestSuite) SetupTest() {
 
 	suite.logger, err = nucliozap.NewNuclioZapTest("test")
 
-	suite.context, err = NewContext(suite.logger, "192.168.206.24:8081", 1)
+	suite.context, err = NewContext(suite.logger, "<some IP>:8081", 1)
 	suite.Require().NoError(err, "Failed to create context")
 
 	suite.session, err = suite.context.NewSession("iguazio", "iguazio", "iguazio")
