@@ -5,11 +5,11 @@ import "github.com/pkg/errors"
 type SyncItemsCursor struct {
 	currentItem    Item
 	currentError   error
+	currentResponse *Response
 	nextMarker     string
 	moreItemsExist bool
 	itemIndex      int
 	items          []Item
-	response       *Response
 	input          *GetItemsInput
 	container      *SyncContainer
 }
@@ -37,7 +37,9 @@ func (ic *SyncItemsCursor) Error() error {
 
 // Release releases a cursor and its underlying resources
 func (ic *SyncItemsCursor) Release() {
-	ic.response.Release()
+	if ic.currentResponse != nil {
+		ic.currentResponse.Release()
+	}
 }
 
 // Next gets the next matching item. this may potentially block as this lazy loads items from the collection
@@ -70,7 +72,7 @@ func (ic *SyncItemsCursor) Next() (Item, error) {
 	}
 
 	// release the previous response
-	ic.response.Release()
+	ic.currentResponse.Release()
 
 	// set the new response - read all the sub information from it
 	ic.setResponse(newResponse)
@@ -80,8 +82,8 @@ func (ic *SyncItemsCursor) Next() (Item, error) {
 }
 
 // gets all items
-func (ic *SyncItemsCursor) All() ([]*Item, error) {
-	items := []*Item{}
+func (ic *SyncItemsCursor) All() ([]Item, error) {
+	var items []Item
 
 	for {
 		item, err := ic.Next()
@@ -99,8 +101,16 @@ func (ic *SyncItemsCursor) All() ([]*Item, error) {
 	return items, nil
 }
 
+func (ic *SyncItemsCursor) GetField(name string) interface{} {
+	return ic.currentItem[name]
+}
+
+func (ic *SyncItemsCursor) GetFields() map[string]interface{} {
+	return ic.currentItem
+}
+
 func (ic *SyncItemsCursor) setResponse(response *Response) {
-	ic.response = response
+	ic.currentResponse = response
 
 	getItemsOutput := response.Output.(*GetItemsOutput)
 

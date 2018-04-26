@@ -263,12 +263,7 @@ func (sc *SyncContainer) GetItems(input *GetItemsInput) (*Response, error) {
 }
 
 func (sc *SyncContainer) GetItemsCursor(input *GetItemsInput) (*SyncItemsCursor, error) {
-	response, err := sc.GetItems(input)
-	if err != nil {
-		return nil, err
-	}
-
-	return newSyncItemsCursor(sc, input, response), nil
+	return newSyncItemsCursor(sc, input)
 }
 
 func (sc *SyncContainer) PutItem(input *PutItemInput) error {

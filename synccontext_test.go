@@ -27,7 +27,7 @@ func (suite *SyncContextTestSuite) SetupTest() {
 
 	suite.logger, err = nucliozap.NewNuclioZapTest("test")
 
-	suite.context, err = NewContext(suite.logger, "10.90.0.104:8081", 1)
+	suite.context, err = NewContext(suite.logger, "10.90.0.111:8081", 1)
 	suite.Require().NoError(err, "Failed to create context")
 
 	suite.session, err = suite.context.NewSession("iguazio", "iguazio", "iguazio")
@@ -294,31 +294,18 @@ func (suite *SyncContextEMDTestSuite) verifyItems(items map[string]map[string]in
 		AttributeNames: []string{"*"},
 	}
 
-	response, err := suite.container.Sync.GetItems(&getItemsInput)
-	suite.Require().NoError(err, "Failed to get items")
-
 	cursor, err := suite.container.Sync.GetItemsCursor(&getItemsInput)
 	suite.Require().NoError(err, "Failed to create cursor")
 
-	var receivedItems []Item
-
-	for {
-		item, err := cursor.Next()
-		suite.Require().NoError(err)
-
-		if item == nil {
-			break
-		}
-
-		receivedItems = append(receivedItems, *item)
-	}
+	receivedItems, err := cursor.All()
+	suite.Require().NoError(err)
 
 	suite.Require().Len(receivedItems, len(items))
 
 	// TODO: test values
 
 	// release the response
-	response.Release()
+	cursor.Release()
 }
 
 func (suite *SyncContextEMDTestSuite) deleteItems(items map[string]map[string]interface{}) {
@@ -597,8 +584,8 @@ func (suite *SyncContextCursorTestSuite) getItemKey(itemIndex int) string {
 	return fmt.Sprintf("emd0/item-%d", itemIndex)
 }
 
-func (suite *SyncContextCursorTestSuite) verifyItem(item *Item) {
-	suite.Require().Equal((*item)["__name"].(string), fmt.Sprintf("item-%d", (*item)["attr"]))
+func (suite *SyncContextCursorTestSuite) verifyItem(item Item) {
+	suite.Require().Equal(item["__name"].(string), fmt.Sprintf("item-%d", item["attr"]))
 }
 
 //
