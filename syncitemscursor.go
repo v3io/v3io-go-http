@@ -1,48 +1,68 @@
 package v3io
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+)
+
+var ErrInvalidTypeConversion = errors.New("Invalid type conversion")
 
 type SyncItemsCursor struct {
-	nextMarker     string
-	moreItemsExist bool
-	itemIndex      int
-	items          []Item
-	response       *Response
-	input          *GetItemsInput
-	container      *SyncContainer
+	currentItem     Item
+	currentError    error
+	currentResponse *Response
+	nextMarker      string
+	moreItemsExist  bool
+	itemIndex       int
+	items           []Item
+	input           *GetItemsInput
+	container       *SyncContainer
 }
 
-func newSyncItemsCursor(container *SyncContainer, input *GetItemsInput, response *Response) *SyncItemsCursor {
+func newSyncItemsCursor(container *SyncContainer, input *GetItemsInput) (*SyncItemsCursor, error) {
 	newSyncItemsCursor := &SyncItemsCursor{
 		container: container,
 		input:     input,
 	}
 
+	response, err := container.GetItems(input)
+	if err != nil {
+		return nil, err
+	}
+
 	newSyncItemsCursor.setResponse(response)
 
-	return newSyncItemsCursor
+	return newSyncItemsCursor, nil
 }
 
-// release a cursor and its underlying resources
+// Error returns the last error
+func (ic *SyncItemsCursor) Error() error {
+	return ic.currentError
+}
+
+// Release releases a cursor and its underlying resources
 func (ic *SyncItemsCursor) Release() {
-	ic.response.Release()
+	if ic.currentResponse != nil {
+		ic.currentResponse.Release()
+	}
 }
 
-// get the next matching item. this may potentially block as this lazy loads items from the collection
-func (ic *SyncItemsCursor) Next() (*Item, error) {
+// Next gets the next matching item. this may potentially block as this lazy loads items from the collection
+func (ic *SyncItemsCursor) Next() (Item, error) {
 
 	// are there any more items left in the previous response we received?
 	if ic.itemIndex < len(ic.items) {
-		item := &ic.items[ic.itemIndex]
+		ic.currentItem = ic.items[ic.itemIndex]
+		ic.currentError = nil
 
 		// next time we'll give next item
 		ic.itemIndex++
 
-		return item, nil
+		return ic.currentItem, nil
 	}
 
 	// are there any more items up stream?
 	if !ic.moreItemsExist {
+		ic.currentError = nil
 		return nil, nil
 	}
 
@@ -56,7 +76,7 @@ func (ic *SyncItemsCursor) Next() (*Item, error) {
 	}
 
 	// release the previous response
-	ic.response.Release()
+	ic.currentResponse.Release()
 
 	// set the new response - read all the sub information from it
 	ic.setResponse(newResponse)
@@ -66,8 +86,8 @@ func (ic *SyncItemsCursor) Next() (*Item, error) {
 }
 
 // gets all items
-func (ic *SyncItemsCursor) All() ([]*Item, error) {
-	items := []*Item{}
+func (ic *SyncItemsCursor) All() ([]Item, error) {
+	var items []Item
 
 	for {
 		item, err := ic.Next()
@@ -85,8 +105,24 @@ func (ic *SyncItemsCursor) All() ([]*Item, error) {
 	return items, nil
 }
 
+func (ic *SyncItemsCursor) GetField(name string) interface{} {
+	return ic.currentItem[name]
+}
+
+func (ic *SyncItemsCursor) GetFieldInt(name string) (int, error) {
+	return ic.currentItem.GetFieldInt(name)
+}
+
+func (ic *SyncItemsCursor) GetFieldString(name string) (string, error) {
+	return ic.currentItem.GetFieldString(name)
+}
+
+func (ic *SyncItemsCursor) GetFields() map[string]interface{} {
+	return ic.currentItem
+}
+
 func (ic *SyncItemsCursor) setResponse(response *Response) {
-	ic.response = response
+	ic.currentResponse = response
 
 	getItemsOutput := response.Output.(*GetItemsOutput)
 

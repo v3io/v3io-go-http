@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/nuclio/logger"
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
-	"github.com/nuclio/logger"
 )
 
 // function names
@@ -263,12 +263,7 @@ func (sc *SyncContainer) GetItems(input *GetItemsInput) (*Response, error) {
 }
 
 func (sc *SyncContainer) GetItemsCursor(input *GetItemsInput) (*SyncItemsCursor, error) {
-	response, err := sc.GetItems(input)
-	if err != nil {
-		return nil, err
-	}
-
-	return newSyncItemsCursor(sc, input, response), nil
+	return newSyncItemsCursor(sc, input)
 }
 
 func (sc *SyncContainer) PutItem(input *PutItemInput) error {
@@ -291,7 +286,7 @@ func (sc *SyncContainer) PutItems(input *PutItemsInput) (*Response, error) {
 	for itemKey, itemAttributes := range input.Items {
 
 		// try to post the item
-		_, err := sc.postItem(input.Path + "/" + itemKey, putItemFunctionName, itemAttributes, putItemHeaders, nil)
+		_, err := sc.postItem(input.Path+"/"+itemKey, putItemFunctionName, itemAttributes, putItemHeaders, nil)
 
 		// if there was an error, shove it to the list of errors
 		if err != nil {
@@ -323,11 +318,11 @@ func (sc *SyncContainer) UpdateItem(input *UpdateItemInput) error {
 			"UpdateMode": "CreateOrReplaceAttributes",
 		}
 
-		_, err = sc.postItem(input.Path, putItemFunctionName, input.Attributes, updateItemHeaders, body)
+		_, err = sc.postItem(input.Path, putItemFunctionName, input.Attributes, putItemHeaders, body)
 
 	} else if input.Expression != nil {
 
-		_, err = sc.putItem(input.Path, putItemFunctionName, *input.Expression, updateItemHeaders)
+		_, err = sc.putItem(input.Path, updateItemFunctionName, *input.Expression, updateItemHeaders)
 	}
 
 	return err
@@ -623,7 +618,7 @@ func (sc *SyncContainer) sendRequest(method string,
 
 	// make sure we got expected status
 	if !success {
-		err = fmt.Errorf("Failed GET with status %d", response.response.StatusCode())
+		err = fmt.Errorf("Failed %s with status %d", method, response.response.StatusCode())
 		goto cleanup
 	}
 

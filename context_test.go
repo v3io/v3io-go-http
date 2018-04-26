@@ -26,13 +26,13 @@ func (suite *ContextTestSuite) SetupTest() {
 
 	suite.logger, err = nucliozap.NewNuclioZapTest("test")
 
-	suite.context, err = NewContext(suite.logger, "192.168.51.240:8081", 8)
+	suite.context, err = NewContext(suite.logger, "<some IP>:8081", 8)
 	suite.Require().NoError(err, "Failed to create context")
 
 	suite.session, err = suite.context.NewSession("iguazio", "iguazio", "iguazio")
 	suite.Require().NoError(err, "Failed to create session")
 
-	suite.container, err = suite.session.NewContainer("1024")
+	suite.container, err = suite.session.NewContainer("1025")
 	suite.Require().NoError(err, "Failed to create container")
 }
 
@@ -40,6 +40,7 @@ func (suite *ContextTestSuite) TestObject() {
 	numRequests := 10
 	pathFormat := "object-%d.txt"
 	contentsFormat := "contents: %d"
+	someContext := 30
 
 	responseChan := make(chan *Response, 128)
 
@@ -52,7 +53,7 @@ func (suite *ContextTestSuite) TestObject() {
 		request, err := suite.container.PutObject(&PutObjectInput{
 			Path: fmt.Sprintf(pathFormat, requestIndex),
 			Body: []byte(fmt.Sprintf(contentsFormat, requestIndex)),
-		}, responseChan)
+		}, &someContext, responseChan)
 
 		suite.Require().NoError(err)
 		suite.Require().NotNil(request)
@@ -71,7 +72,7 @@ func (suite *ContextTestSuite) TestObject() {
 	for requestIndex := 0; requestIndex < numRequests; requestIndex++ {
 		request, err := suite.container.GetObject(&GetObjectInput{
 			Path: fmt.Sprintf(pathFormat, requestIndex),
-		}, responseChan)
+		}, &someContext, responseChan)
 
 		suite.Require().NoError(err)
 		suite.Require().NotNil(request)
@@ -84,6 +85,9 @@ func (suite *ContextTestSuite) TestObject() {
 	// wait for the responses and verify the contents
 	suite.waitForResponses(responseChan, numRequests, func(response *Response) {
 		pendingRequestIndex := pendingGetRequests[response.ID]
+
+		// verify the context
+		suite.Require().Equal(&someContext, response.Context)
 
 		// verify that the body of the response is equal to the contents formatting with the request index
 		// as mapped from the response ID
@@ -104,7 +108,7 @@ func (suite *ContextTestSuite) TestObject() {
 	for requestIndex := 0; requestIndex < numRequests; requestIndex++ {
 		request, err := suite.container.DeleteObject(&DeleteObjectInput{
 			Path: fmt.Sprintf(pathFormat, requestIndex),
-		}, responseChan)
+		}, &someContext, responseChan)
 
 		suite.Require().NoError(err)
 		suite.Require().NotNil(request)

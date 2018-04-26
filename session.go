@@ -1,8 +1,8 @@
 package v3io
 
 import (
-	"github.com/pkg/errors"
 	"github.com/nuclio/logger"
+	"github.com/pkg/errors"
 )
 
 type Session struct {

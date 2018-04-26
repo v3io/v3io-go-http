@@ -22,6 +22,9 @@ type Request struct {
 	// holds the input (e.g. ListBucketInput, GetItemInput)
 	Input interface{}
 
+	// a user supplied context
+	Context interface{}
+
 	// the channel to which the response must be posted
 	responseChan chan *Response
 
@@ -40,6 +43,9 @@ type Response struct {
 
 	// holds the error for async responses
 	Error error
+
+	// a user supplied context
+	Context interface{}
 
 	// pointer to container
 	requestResponse *RequestResponse
@@ -150,7 +156,7 @@ type PutItemsInput struct {
 
 type PutItemsOutput struct {
 	Success bool
-	Errors map[string]error
+	Errors  map[string]error
 }
 
 type UpdateItemInput struct {
@@ -163,8 +169,6 @@ type GetItemInput struct {
 	Path           string
 	AttributeNames []string
 }
-
-type Item map[string]interface{}
 
 type GetItemOutput struct {
 	Item Item
