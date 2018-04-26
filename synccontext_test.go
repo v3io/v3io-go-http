@@ -27,13 +27,13 @@ func (suite *SyncContextTestSuite) SetupTest() {
 
 	suite.logger, err = nucliozap.NewNuclioZapTest("test")
 
-	suite.context, err = NewContext(suite.logger, "10.90.0.111:8081", 1)
+	suite.context, err = NewContext(suite.logger, "192.168.206.24:8081", 1)
 	suite.Require().NoError(err, "Failed to create context")
 
 	suite.session, err = suite.context.NewSession("iguazio", "iguazio", "iguazio")
 	suite.Require().NoError(err, "Failed to create session")
 
-	suite.container, err = suite.session.NewContainer("1")
+	suite.container, err = suite.session.NewContainer("1025")
 	suite.Require().NoError(err, "Failed to create container")
 }
 
@@ -108,7 +108,7 @@ type SyncContextEMDTestSuite struct {
 }
 
 func (suite *SyncContextEMDTestSuite) TestEMD() {
-	items := map[string]map[string]interface{}{
+	itemsToCreate := map[string]map[string]interface{}{
 		"bob":    {"age": 42, "feature": "mustache"},
 		"linda":  {"age": 41, "feature": "singing"},
 		"louise": {"age": 9, "feature": "bunny ears"},
@@ -120,10 +120,10 @@ func (suite *SyncContextEMDTestSuite) TestEMD() {
 	//
 
 	// create the items
-	for itemKey, itemAttributes := range items {
+	for itemToCreateKey, itemToCreateAttributes := range itemsToCreate {
 		input := PutItemInput{
-			Path:       "emd0/" + itemKey,
-			Attributes: itemAttributes,
+			Path:       "emd0/" + itemToCreateKey,
+			Attributes: itemToCreateAttributes,
 		}
 
 		// get a specific bucket
@@ -131,7 +131,7 @@ func (suite *SyncContextEMDTestSuite) TestEMD() {
 		suite.Require().NoError(err, "Failed to put item")
 	}
 
-	suite.verifyItems(items)
+	suite.verifyItems(itemsToCreate)
 
 	//
 	// Update item and verify
@@ -176,15 +176,18 @@ func (suite *SyncContextEMDTestSuite) TestEMD() {
 		Filter:         "age > 15",
 	}
 
-	response, err = suite.container.Sync.GetItems(&getItemsInput)
+	cursor, err := suite.container.Sync.GetItemsCursor(&getItemsInput)
 	suite.Require().NoError(err, "Failed to get items")
 
-	getItemsOutput := response.Output.(*GetItemsOutput)
-	suite.Require().Len(getItemsOutput.Items, 2)
+	cursorItems, err := cursor.All()
+	suite.Require().NoError(err)
+	suite.Require().Len(cursorItems, 2)
 
 	// iterate over age, make sure it's over 15
-	for _, item := range getItemsOutput.Items {
-		suite.Require().True(item["age"].(int) > 15)
+	for _, cursorItem := range cursorItems {
+		age, err := cursorItem.GetFieldInt("age")
+		suite.Require().NoError(err)
+		suite.Require().True(age > 15)
 	}
 
 	// release the response
@@ -226,7 +229,7 @@ func (suite *SyncContextEMDTestSuite) TestEMD() {
 	// Delete everything
 	//
 
-	suite.deleteItems(items)
+	suite.deleteItems(itemsToCreate)
 }
 
 func (suite *SyncContextEMDTestSuite) TestPutItems() {
@@ -299,7 +302,6 @@ func (suite *SyncContextEMDTestSuite) verifyItems(items map[string]map[string]in
 
 	receivedItems, err := cursor.All()
 	suite.Require().NoError(err)
-
 	suite.Require().Len(receivedItems, len(items))
 
 	// TODO: test values
@@ -514,10 +516,8 @@ func (suite *SyncContextCursorTestSuite) TearDownTest() {
 }
 
 func (suite *SyncContextCursorTestSuite) TestEMDCursorNoEntries() {
-	// suite.T().Skip()
-
 	getItemsInput := GetItemsInput{
-		Path:           "emd0",
+		Path:           "emd0/",
 		AttributeNames: []string{"*"},
 		Filter:         "attr > 100000",
 	}
@@ -533,10 +533,8 @@ func (suite *SyncContextCursorTestSuite) TestEMDCursorNoEntries() {
 }
 
 func (suite *SyncContextCursorTestSuite) TestEMDCursorNext() {
-	// suite.T().Skip()
-
 	getItemsInput := GetItemsInput{
-		Path:           "emd0",
+		Path:           "emd0/",
 		AttributeNames: []string{"*"},
 		Limit:          5,
 	}
@@ -556,10 +554,8 @@ func (suite *SyncContextCursorTestSuite) TestEMDCursorNext() {
 }
 
 func (suite *SyncContextCursorTestSuite) TestEMDCursorAll() {
-	// suite.T().Skip()
-
 	getItemsInput := GetItemsInput{
-		Path:           "emd0",
+		Path:           "emd0/",
 		AttributeNames: []string{"*"},
 		Limit:          5,
 	}
@@ -597,8 +593,6 @@ type SyncContextStressTestSuite struct {
 }
 
 func (suite *SyncContextStressTestSuite) TestStressPutGet() {
-	// suite.T().Skip()
-
 	pathTemplate := "stress/stress-%d.txt"
 	contents := "0123456789"
 

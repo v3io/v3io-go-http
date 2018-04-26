@@ -1,6 +1,10 @@
 package v3io
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+)
+
+var ErrInvalidTypeConversion = errors.New("Invalid type conversion")
 
 type SyncItemsCursor struct {
 	currentItem    Item
@@ -103,6 +107,14 @@ func (ic *SyncItemsCursor) All() ([]Item, error) {
 
 func (ic *SyncItemsCursor) GetField(name string) interface{} {
 	return ic.currentItem[name]
+}
+
+func (ic *SyncItemsCursor) GetFieldInt(name string) (int, error) {
+	return ic.currentItem.GetFieldInt(name)
+}
+
+func (ic *SyncItemsCursor) GetFieldString(name string) (string, error) {
+	return ic.currentItem.GetFieldString(name)
 }
 
 func (ic *SyncItemsCursor) GetFields() map[string]interface{} {

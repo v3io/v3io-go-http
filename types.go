@@ -164,8 +164,6 @@ type GetItemInput struct {
 	AttributeNames []string
 }
 
-type Item map[string]interface{}
-
 type GetItemOutput struct {
 	Item Item
 }
