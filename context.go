@@ -98,16 +98,9 @@ func (c *Context) workerEntry(workerIndex int) {
 		response.ID = request.ID
 		response.Error = err
 		response.requestResponse = request.requestResponse
+		response.Context = request.Context
 
 		// write to response channel
 		request.responseChan <- &request.requestResponse.Response
-
-		// write the response to the channel (never block)
-		//switch {
-		//case request.responseChan <- response:
-		//	break
-		//default:
-		//	c.logger.WarnWith("Failed to write response to channel")
-		//}
 	}
 }
