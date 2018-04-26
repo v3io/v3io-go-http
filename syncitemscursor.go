@@ -7,15 +7,15 @@ import (
 var ErrInvalidTypeConversion = errors.New("Invalid type conversion")
 
 type SyncItemsCursor struct {
-	currentItem    Item
-	currentError   error
+	currentItem     Item
+	currentError    error
 	currentResponse *Response
-	nextMarker     string
-	moreItemsExist bool
-	itemIndex      int
-	items          []Item
-	input          *GetItemsInput
-	container      *SyncContainer
+	nextMarker      string
+	moreItemsExist  bool
+	itemIndex       int
+	items           []Item
+	input           *GetItemsInput
+	container       *SyncContainer
 }
 
 func newSyncItemsCursor(container *SyncContainer, input *GetItemsInput) (*SyncItemsCursor, error) {
