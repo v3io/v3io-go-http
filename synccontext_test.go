@@ -27,13 +27,13 @@ func (suite *SyncContextTestSuite) SetupTest() {
 
 	suite.logger, err = nucliozap.NewNuclioZapTest("test")
 
-	suite.context, err = NewContext(suite.logger, "<some IP>:8081", 1)
+	suite.context, err = NewContext(suite.logger, "<some ip>:8081", 1)
 	suite.Require().NoError(err, "Failed to create context")
 
 	suite.session, err = suite.context.NewSession("iguazio", "iguazio", "iguazio")
 	suite.Require().NoError(err, "Failed to create session")
 
-	suite.container, err = suite.session.NewContainer("1025")
+	suite.container, err = suite.session.NewContainer("1024")
 	suite.Require().NoError(err, "Failed to create container")
 }
 
@@ -525,7 +525,7 @@ func (suite *SyncContextCursorTestSuite) TestEMDCursorNoEntries() {
 	cursor, err := suite.container.Sync.GetItemsCursor(&getItemsInput)
 	suite.Require().NoError(err, "Failed to get items")
 
-	item, err := cursor.Next()
+	item, err := cursor.NextItem()
 	suite.Require().NoError(err)
 	suite.Require().Nil(item)
 
@@ -542,13 +542,15 @@ func (suite *SyncContextCursorTestSuite) TestEMDCursorNext() {
 	cursor, err := suite.container.Sync.GetItemsCursor(&getItemsInput)
 	suite.Require().NoError(err, "Failed to get items")
 
-	for itemIndex := 0; itemIndex < suite.numItems; itemIndex++ {
-		item, err := cursor.Next()
+	for cursor.Next() {
+		item := cursor.GetItem()
 		suite.Require().NoError(err)
 		suite.Require().NotNil(item)
 
 		suite.verifyItem(item)
 	}
+
+	suite.Require().NoError(cursor.Err())
 
 	cursor.Release()
 }

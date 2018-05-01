@@ -34,8 +34,8 @@ func newSyncItemsCursor(container *SyncContainer, input *GetItemsInput) (*SyncIt
 	return newSyncItemsCursor, nil
 }
 
-// Error returns the last error
-func (ic *SyncItemsCursor) Error() error {
+// Err returns the last error
+func (ic *SyncItemsCursor) Err() error {
 	return ic.currentError
 }
 
@@ -47,7 +47,18 @@ func (ic *SyncItemsCursor) Release() {
 }
 
 // Next gets the next matching item. this may potentially block as this lazy loads items from the collection
-func (ic *SyncItemsCursor) Next() (Item, error) {
+func (ic *SyncItemsCursor) Next() bool {
+	item, err := ic.NextItem()
+
+	if item == nil || err != nil {
+		return false
+	}
+
+	return true
+}
+
+// NextItem gets the next matching item. this may potentially block as this lazy loads items from the collection
+func (ic *SyncItemsCursor) NextItem() (Item, error) {
 
 	// are there any more items left in the previous response we received?
 	if ic.itemIndex < len(ic.items) {
@@ -82,24 +93,19 @@ func (ic *SyncItemsCursor) Next() (Item, error) {
 	ic.setResponse(newResponse)
 
 	// and recurse into next now that we repopulated response
-	return ic.Next()
+	return ic.NextItem()
 }
 
 // gets all items
 func (ic *SyncItemsCursor) All() ([]Item, error) {
 	var items []Item
 
-	for {
-		item, err := ic.Next()
-		if err != nil {
-			return nil, errors.Wrap(err, "Failed to get next item")
-		}
+	for ic.Next() {
+		items = append(items, ic.GetItem())
+	}
 
-		if item == nil {
-			break
-		}
-
-		items = append(items, item)
+	if ic.Err() != nil {
+		return nil, ic.Err()
 	}
 
 	return items, nil
@@ -118,6 +124,10 @@ func (ic *SyncItemsCursor) GetFieldString(name string) (string, error) {
 }
 
 func (ic *SyncItemsCursor) GetFields() map[string]interface{} {
+	return ic.currentItem
+}
+
+func (ic *SyncItemsCursor) GetItem() Item {
 	return ic.currentItem
 }
 
