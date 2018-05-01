@@ -34,8 +34,8 @@ func newSyncItemsCursor(container *SyncContainer, input *GetItemsInput) (*SyncIt
 	return newSyncItemsCursor, nil
 }
 
-// Error returns the last error
-func (ic *SyncItemsCursor) Error() error {
+// Err returns the last error
+func (ic *SyncItemsCursor) Err() error {
 	return ic.currentError
 }
 
@@ -104,8 +104,8 @@ func (ic *SyncItemsCursor) All() ([]Item, error) {
 		items = append(items, ic.GetItem())
 	}
 
-	if ic.Error() != nil {
-		return nil, ic.Error()
+	if ic.Err() != nil {
+		return nil, ic.Err()
 	}
 
 	return items, nil

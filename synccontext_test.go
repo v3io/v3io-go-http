@@ -550,7 +550,7 @@ func (suite *SyncContextCursorTestSuite) TestEMDCursorNext() {
 		suite.verifyItem(item)
 	}
 
-	suite.Require().NoError(cursor.Error())
+	suite.Require().NoError(cursor.Err())
 
 	cursor.Release()
 }
