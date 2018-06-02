@@ -179,6 +179,7 @@ type GetItemsInput struct {
 	AttributeNames []string
 	Filter         string
 	Marker         string
+	ShardingKey    string
 	Limit          int
 	Segment        int
 	TotalSegments  int

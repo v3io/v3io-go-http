@@ -202,6 +202,10 @@ func (sc *SyncContainer) GetItems(input *GetItemsInput) (*Response, error) {
 		body["Marker"] = input.Marker
 	}
 
+	if input.ShardingKey != "" {
+		body["ShardingKey"] = input.ShardingKey
+	}
+
 	if input.Limit != 0 {
 		body["Limit"] = input.Limit
 	}
