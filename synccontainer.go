@@ -167,7 +167,7 @@ func (sc *SyncContainer) GetItem(input *GetItemInput) (*Response, error) {
 		Item map[string]map[string]string
 	}{}
 
-	sc.logger.InfoWith("Body", "body", string(response.Body()))
+	sc.logger.DebugWith("Body", "body", string(response.Body()))
 
 	// unmarshal the body
 	err = json.Unmarshal(response.Body(), &item)
@@ -230,7 +230,7 @@ func (sc *SyncContainer) GetItems(input *GetItemsInput) (*Response, error) {
 		return nil, err
 	}
 
-	sc.logger.InfoWith("Body", "body", string(response.Body()))
+	sc.logger.DebugWith("Body", "body", string(response.Body()))
 
 	getItemsResponse := struct {
 		Items            []map[string]map[string]string
