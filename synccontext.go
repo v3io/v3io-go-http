@@ -24,6 +24,7 @@ func newSyncContext(parentLogger logger.Logger, clusterURL string) (*SyncContext
 }
 
 func (sc *SyncContext) sendRequest(request *fasthttp.Request, response *fasthttp.Response) error {
+
 	err := sc.httpClient.Do(request, response)
 	if err != nil {
 		return err
