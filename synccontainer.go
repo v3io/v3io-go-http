@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"path"
 	"reflect"
@@ -13,7 +12,6 @@ import (
 
 	"github.com/nuclio/logger"
 	"github.com/pkg/errors"
-	"github.com/valyala/fasthttp"
 )
 
 // function names
@@ -107,12 +105,6 @@ func newSyncContainer(parentLogger logger.Logger, session *SyncSession, alias st
 	}, nil
 }
 
-func (sc *SyncContainer) ListAll() (*Response, error) {
-	output := ListAllOutput{}
-
-	return sc.sendRequestAndXMLUnmarshal("GET", sc.uriPrefix, nil, nil, &output)
-}
-
 func (sc *SyncContainer) ListBucket(input *ListBucketInput) (*Response, error) {
 	output := ListBucketOutput{}
 
@@ -122,11 +114,11 @@ func (sc *SyncContainer) ListBucket(input *ListBucketInput) (*Response, error) {
 		fullPath += "?prefix=" + input.Path
 	}
 
-	return sc.sendRequestAndXMLUnmarshal("GET", fullPath, nil, nil, &output)
+	return sc.session.sendRequestAndXMLUnmarshal("GET", fullPath, nil, nil, &output)
 }
 
 func (sc *SyncContainer) GetObject(input *GetObjectInput) (*Response, error) {
-	response, err := sc.sendRequest("GET", sc.getPathURI(input.Path), nil, nil, false)
+	response, err := sc.session.sendRequest("GET", sc.getPathURI(input.Path), nil, nil, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to send request")
 	}
@@ -135,7 +127,7 @@ func (sc *SyncContainer) GetObject(input *GetObjectInput) (*Response, error) {
 }
 
 func (sc *SyncContainer) DeleteObject(input *DeleteObjectInput) error {
-	_, err := sc.sendRequest("DELETE", sc.getPathURI(input.Path), nil, nil, true)
+	_, err := sc.session.sendRequest("DELETE", sc.getPathURI(input.Path), nil, nil, true)
 	if err != nil {
 		return errors.Wrap(err, "Failed to send request")
 	}
@@ -144,7 +136,7 @@ func (sc *SyncContainer) DeleteObject(input *DeleteObjectInput) error {
 }
 
 func (sc *SyncContainer) PutObject(input *PutObjectInput) error {
-	_, err := sc.sendRequest("PUT", sc.getPathURI(input.Path), nil, input.Body, true)
+	_, err := sc.session.sendRequest("PUT", sc.getPathURI(input.Path), nil, input.Body, true)
 	if err != nil {
 		return errors.Wrap(err, "Failed to send request")
 	}
@@ -157,7 +149,7 @@ func (sc *SyncContainer) GetItem(input *GetItemInput) (*Response, error) {
 	// no need to marshal, just sprintf
 	body := fmt.Sprintf(`{"AttributesToGet": "%s"}`, strings.Join(input.AttributeNames, ","))
 
-	response, err := sc.sendRequest("POST", sc.getPathURI(input.Path), getItemHeaders, []byte(body), false)
+	response, err := sc.session.sendRequest("POST", sc.getPathURI(input.Path), getItemHeaders, []byte(body), false)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +212,7 @@ func (sc *SyncContainer) GetItems(input *GetItemsInput) (*Response, error) {
 		return nil, errors.Wrap(err, "Failed to marshal body")
 	}
 
-	response, err := sc.sendRequest("POST",
+	response, err := sc.session.sendRequest("POST",
 		sc.getPathURI(input.Path),
 		getItemsHeaders,
 		[]byte(marshalledBody),
@@ -278,7 +270,7 @@ func (sc *SyncContainer) PutItem(input *PutItemInput) error {
 }
 
 func (sc *SyncContainer) PutItems(input *PutItemsInput) (*Response, error) {
-	response := sc.allocateResponse()
+	response := allocateResponse()
 	if response == nil {
 		return nil, errors.New("Failed to allocate response")
 	}
@@ -337,7 +329,7 @@ func (sc *SyncContainer) CreateStream(input *CreateStreamInput) error {
 		input.ShardCount,
 		input.RetentionPeriodHours)
 
-	_, err := sc.sendRequest("POST", sc.getPathURI(input.Path), createStreamHeaders, []byte(body), true)
+	_, err := sc.session.sendRequest("POST", sc.getPathURI(input.Path), createStreamHeaders, []byte(body), true)
 	if err != nil {
 		return errors.Wrap(err, "Failed to send request")
 	}
@@ -403,7 +395,7 @@ func (sc *SyncContainer) PutRecords(input *PutRecordsInput) (*Response, error) {
 	str := string(buffer.Bytes())
 	fmt.Println(str)
 
-	response, err := sc.sendRequest("POST", sc.getPathURI(input.Path), putRecordsHeaders, buffer.Bytes(), false)
+	response, err := sc.session.sendRequest("POST", sc.getPathURI(input.Path), putRecordsHeaders, buffer.Bytes(), false)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to send request")
 	}
@@ -439,7 +431,7 @@ func (sc *SyncContainer) SeekShard(input *SeekShardInput) (*Response, error) {
 
 	buffer.WriteString(`}`)
 
-	response, err := sc.sendRequest("POST", sc.getPathURI(input.Path), seekShardsHeaders, buffer.Bytes(), false)
+	response, err := sc.session.sendRequest("POST", sc.getPathURI(input.Path), seekShardsHeaders, buffer.Bytes(), false)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to send request")
 	}
@@ -463,7 +455,7 @@ func (sc *SyncContainer) GetRecords(input *GetRecordsInput) (*Response, error) {
 		input.Location,
 		input.Limit)
 
-	response, err := sc.sendRequest("POST", sc.getPathURI(input.Path), getRecordsHeaders, []byte(body), false)
+	response, err := sc.session.sendRequest("POST", sc.getPathURI(input.Path), getRecordsHeaders, []byte(body), false)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to send request")
 	}
@@ -507,7 +499,7 @@ func (sc *SyncContainer) postItem(path string,
 		return nil, errors.Wrap(err, "Failed to marshal body contents")
 	}
 
-	return sc.sendRequest("POST", sc.getPathURI(path), headers, jsonEncodedBodyContents, false)
+	return sc.session.sendRequest("POST", sc.getPathURI(path), headers, jsonEncodedBodyContents, false)
 }
 
 func (sc *SyncContainer) putItem(path string,
@@ -525,7 +517,7 @@ func (sc *SyncContainer) putItem(path string,
 		return nil, errors.Wrap(err, "Failed to marshal body contents")
 	}
 
-	return sc.sendRequest("PUT", sc.getPathURI(path), headers, jsonEncodedBodyContents, false)
+	return sc.session.sendRequest("PUT", sc.getPathURI(path), headers, jsonEncodedBodyContents, false)
 }
 
 // {"age": 30, "name": "foo"} -> {"age": {"N": 30}, "name": {"S": "foo"}}
@@ -587,94 +579,6 @@ func (sc *SyncContainer) decodeTypedAttributes(typedAttributes map[string]map[st
 	}
 
 	return attributes, nil
-}
-
-func (sc *SyncContainer) sendRequest(method string,
-	uri string,
-	headers map[string]string,
-	body []byte,
-	releaseResponse bool) (*Response, error) {
-
-	var success bool
-	request := fasthttp.AcquireRequest()
-	response := sc.allocateResponse()
-
-	// init request
-	request.SetRequestURI(uri)
-	request.Header.SetMethod(method)
-	request.SetBody(body)
-
-	if headers != nil {
-		for headerName, headerValue := range headers {
-			request.Header.Add(headerName, headerValue)
-		}
-	}
-
-	// execute the request
-	err := sc.session.sendRequest(request, response.response)
-	if err != nil {
-		err = errors.Wrapf(err, "Failed to send request %s", uri)
-		goto cleanup
-	}
-
-	// did we get a 2xx response?
-	success = response.response.StatusCode() >= 200 && response.response.StatusCode() < 300
-
-	// make sure we got expected status
-	if !success {
-		err = fmt.Errorf("Failed %s with status %d", method, response.response.StatusCode())
-		goto cleanup
-	}
-
-cleanup:
-
-	// we're done with the request - the response must be released by the user
-	// unless there's an error
-	fasthttp.ReleaseRequest(request)
-
-	if err != nil {
-		response.Release()
-		return nil, err
-	}
-
-	// if the user doesn't need the response, release it
-	if releaseResponse {
-		response.Release()
-		return nil, nil
-	}
-
-	return response, nil
-}
-
-func (sc *SyncContainer) sendRequestAndXMLUnmarshal(method string,
-	uri string,
-	headers map[string]string,
-	body []byte,
-	output interface{}) (*Response, error) {
-
-	response, err := sc.sendRequest(method, uri, headers, body, false)
-	if err != nil {
-		return nil, err
-	}
-
-	// unmarshal the body into the output
-	err = xml.Unmarshal(response.response.Body(), output)
-	if err != nil {
-		response.Release()
-
-		return nil, errors.Wrap(err, "Failed to unmarshal")
-	}
-
-	// set output in response
-	response.Output = output
-
-	return response, nil
-}
-
-func (sc *SyncContainer) allocateResponse() *Response {
-	return &Response{
-		response: fasthttp.AcquireResponse(),
-	}
 }
 
 func (sc *SyncContainer) getContext() *SyncContext {
