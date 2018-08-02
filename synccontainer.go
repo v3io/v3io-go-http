@@ -110,7 +110,7 @@ func (sc *SyncContainer) ListBucket(input *ListBucketInput) (*Response, error) {
 
 	// prepare the query path
 	fullPath := sc.uriPrefix
-	if input.Path != "" || input.Marker != "" {
+	if input.Path != "" || input.Marker != "" || input.MaxKeys > 0 {
 		fullPath += "?"
 		params := make([]string, 0)
 		if input.Path != "" {
@@ -118,6 +118,9 @@ func (sc *SyncContainer) ListBucket(input *ListBucketInput) (*Response, error) {
 		}
 		if input.Marker != "" {
 			params = append(params, fmt.Sprintf("marker=%s", input.Marker))
+		}
+		if input.MaxKeys > 0 {
+			params = append(params, fmt.Sprintf("max-keys=%d", input.MaxKeys))
 		}
 		fullPath += strings.Join(params, "&")
 	}

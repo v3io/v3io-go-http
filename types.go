@@ -72,8 +72,9 @@ type RequestResponse struct {
 }
 
 type ListBucketInput struct {
-	Path   string
-	Marker string
+	Path    string
+	Marker  string
+	MaxKeys int
 }
 
 type Content struct {
