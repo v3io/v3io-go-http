@@ -55,7 +55,7 @@ func (c *Context) workerEntry(workerIndex int) {
 		// according to the input type
 		switch typedInput := request.Input.(type) {
 		case *ListAllInput:
-			response, err = request.container.Sync.ListAll()
+			response, err = request.session.Sync.ListAll()
 		case *ListBucketInput:
 			response, err = request.container.Sync.ListBucket(typedInput)
 		case *GetObjectInput:

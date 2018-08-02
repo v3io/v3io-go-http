@@ -3,7 +3,11 @@ package v3io
 import (
 	"github.com/nuclio/logger"
 	"github.com/pkg/errors"
+	"sync/atomic"
 )
+
+// TODO: Request should have a global pool
+var requestID uint64 = 0
 
 type Session struct {
 	Sync    *SyncSession
@@ -31,6 +35,30 @@ func newSession(parentLogger logger.Logger,
 
 func (s *Session) NewContainer(alias string) (*Container, error) {
 	return newContainer(s.logger, s, alias)
+}
+
+func (s *Session) ListAll(input *ListAllInput,
+	context interface{},
+	responseChan chan *Response) (*Request, error) {
+
+	id := atomic.AddUint64(&requestID, 1)
+	requestResponse := &RequestResponse{
+		Request: Request{
+			ID:           id,
+			Input:        input,
+			Context:      context,
+			responseChan: responseChan,
+		},
+	}
+
+	// point to container
+	requestResponse.Request.requestResponse = requestResponse
+
+	if err := s.sendRequest(&requestResponse.Request); err != nil {
+		return nil, errors.Wrap(err, "Failed to send request")
+	}
+
+	return &requestResponse.Request, nil
 }
 
 func (s *Session) sendRequest(request *Request) error {

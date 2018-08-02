@@ -7,9 +7,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO: Request should have a global pool
-var requestID uint64 = 0
-
 type Container struct {
 	logger  logger.Logger
 	session *Session
