@@ -98,6 +98,7 @@ type ListBucketOutput struct {
 	MaxKeys        string         `xml:"MaxKeys"`
 	Contents       []Content      `xml:"Contents"`
 	CommonPrefixes []CommonPrefix `xml:"CommonPrefixes"`
+	IsTruncated    bool           `xml:"IsTruncated"`
 }
 
 type ListAllInput struct {
