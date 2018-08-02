@@ -32,7 +32,7 @@ func (suite *ContextTestSuite) SetupTest() {
 	suite.session, err = suite.context.NewSession("iguazio", "<value>", "")
 	suite.Require().NoError(err, "Failed to create session")
 
-	suite.container, err = suite.session.NewContainer("1024")
+	suite.container, err = suite.session.NewContainer("<value>")
 	suite.Require().NoError(err, "Failed to create container")
 }
 
