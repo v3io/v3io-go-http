@@ -110,8 +110,16 @@ func (sc *SyncContainer) ListBucket(input *ListBucketInput) (*Response, error) {
 
 	// prepare the query path
 	fullPath := sc.uriPrefix
-	if input.Path != "" {
-		fullPath += "?prefix=" + input.Path
+	if input.Path != "" || input.Marker != "" {
+		fullPath += "?"
+		params := make([]string, 0)
+		if input.Path != "" {
+			params = append(params, fmt.Sprintf("prefix=%s", input.Path))
+		}
+		if input.Marker != "" {
+			params = append(params, fmt.Sprintf("marker=%s", input.Marker))
+		}
+		fullPath += strings.Join(params, "&")
 	}
 
 	return sc.session.sendRequestAndXMLUnmarshal("GET", fullPath, nil, nil, &output)
