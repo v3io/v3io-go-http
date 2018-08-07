@@ -26,7 +26,7 @@ func (suite *ContextTestSuite) SetupTest() {
 
 	suite.logger, err = nucliozap.NewNuclioZapTest("test")
 
-	suite.context, err = NewContext(suite.logger, "<value>", 1)
+	suite.context, err = NewContext(suite.logger, "<value>", 8)
 	suite.Require().NoError(err, "Failed to create context")
 
 	suite.session, err = suite.context.NewSession("iguazio", "<value>", "")
