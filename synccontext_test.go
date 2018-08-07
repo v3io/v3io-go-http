@@ -49,11 +49,20 @@ func (suite *SyncContextObjectTestSuite) TestObject() {
 	path := "object.txt"
 	contents := "vegans are better than everyone"
 
+	response, err := suite.container.Sync.GetObject(&GetObjectInput{
+		Path: path,
+	})
+
+	// get the underlying root error
+	errWithStatusCode, errHasStatusCode := err.(ErrorWithStatusCode)
+	suite.Require().True(errHasStatusCode)
+	suite.Require().Equal(404, errWithStatusCode.StatusCode())
+
 	//
 	// PUT contents to some object
 	//
 
-	err := suite.container.Sync.PutObject(&PutObjectInput{
+	err = suite.container.Sync.PutObject(&PutObjectInput{
 		Path: path,
 		Body: []byte(contents),
 	})
@@ -64,7 +73,7 @@ func (suite *SyncContextObjectTestSuite) TestObject() {
 	// Get the contents
 	//
 
-	response, err := suite.container.Sync.GetObject(&GetObjectInput{
+	response, err = suite.container.Sync.GetObject(&GetObjectInput{
 		Path: path,
 	})
 
