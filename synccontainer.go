@@ -149,7 +149,7 @@ func (sc *SyncContainer) GetItem(input *GetItemInput) (*Response, error) {
 	// no need to marshal, just sprintf
 	body := fmt.Sprintf(`{"AttributesToGet": "%s"}`, strings.Join(input.AttributeNames, ","))
 
-	response, err := sc.session.sendRequest("POST", sc.getPathURI(input.Path), getItemHeaders, []byte(body), false)
+	response, err := sc.session.sendRequest("PUT", sc.getPathURI(input.Path), getItemHeaders, []byte(body), false)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ func (sc *SyncContainer) GetItems(input *GetItemsInput) (*Response, error) {
 		return nil, err
 	}
 
-	response, err := sc.session.sendRequest("POST",
+	response, err := sc.session.sendRequest("PUT",
 		sc.getPathURI(input.Path),
 		getItemsHeaders,
 		[]byte(marshalledBody),
@@ -265,7 +265,7 @@ func (sc *SyncContainer) GetItemsCursor(input *GetItemsInput) (*SyncItemsCursor,
 func (sc *SyncContainer) PutItem(input *PutItemInput) error {
 
 	// prepare the query path
-	_, err := sc.postItem(input.Path, putItemFunctionName, input.Attributes, putItemHeaders, nil)
+	_, err := sc.putItem(input.Path, putItemFunctionName, input.Attributes, putItemHeaders, nil)
 	return err
 }
 
@@ -282,7 +282,7 @@ func (sc *SyncContainer) PutItems(input *PutItemsInput) (*Response, error) {
 	for itemKey, itemAttributes := range input.Items {
 
 		// try to post the item
-		_, err := sc.postItem(input.Path+"/"+itemKey, putItemFunctionName, itemAttributes, putItemHeaders, nil)
+		_, err := sc.putItem(input.Path+"/"+itemKey, putItemFunctionName, itemAttributes, putItemHeaders, nil)
 
 		// if there was an error, shove it to the list of errors
 		if err != nil {
@@ -314,11 +314,11 @@ func (sc *SyncContainer) UpdateItem(input *UpdateItemInput) error {
 			"UpdateMode": "CreateOrReplaceAttributes",
 		}
 
-		_, err = sc.postItem(input.Path, putItemFunctionName, input.Attributes, putItemHeaders, body)
+		_, err = sc.putItem(input.Path, putItemFunctionName, input.Attributes, putItemHeaders, body)
 
 	} else if input.Expression != nil {
 
-		_, err = sc.putItem(input.Path, updateItemFunctionName, *input.Expression, updateItemHeaders)
+		_, err = sc.updateItemWithExpression(input.Path, updateItemFunctionName, *input.Expression, updateItemHeaders)
 	}
 
 	return err
@@ -474,7 +474,7 @@ func (sc *SyncContainer) GetRecords(input *GetRecordsInput) (*Response, error) {
 	return response, nil
 }
 
-func (sc *SyncContainer) postItem(path string,
+func (sc *SyncContainer) putItem(path string,
 	functionName string,
 	attributes map[string]interface{},
 	headers map[string]string,
@@ -499,10 +499,10 @@ func (sc *SyncContainer) postItem(path string,
 		return nil, err
 	}
 
-	return sc.session.sendRequest("POST", sc.getPathURI(path), headers, jsonEncodedBodyContents, false)
+	return sc.session.sendRequest("PUT", sc.getPathURI(path), headers, jsonEncodedBodyContents, false)
 }
 
-func (sc *SyncContainer) putItem(path string,
+func (sc *SyncContainer) updateItemWithExpression(path string,
 	functionName string,
 	expression string,
 	headers map[string]string) (*Response, error) {
@@ -517,7 +517,7 @@ func (sc *SyncContainer) putItem(path string,
 		return nil, err
 	}
 
-	return sc.session.sendRequest("PUT", sc.getPathURI(path), headers, jsonEncodedBodyContents, false)
+	return sc.session.sendRequest("POST", sc.getPathURI(path), headers, jsonEncodedBodyContents, false)
 }
 
 // {"age": 30, "name": "foo"} -> {"age": {"N": 30}, "name": {"S": "foo"}}
