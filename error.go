@@ -3,7 +3,7 @@ package v3io
 import (
 	"fmt"
 
-	"github.com/nuclio/nuclio/pkg/errors"
+	"errors"
 )
 
 // ErrorWithStatusCode is an error that holds a status code
