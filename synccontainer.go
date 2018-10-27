@@ -438,8 +438,9 @@ func (sc *SyncContainer) SeekShard(input *SeekShardInput) (*Response, error) {
 		buffer.WriteString(`, "StartingSequenceNumber": `)
 		buffer.WriteString(strconv.Itoa(input.StartingSequenceNumber))
 	} else if input.Type == SeekShardInputTypeTime {
-		buffer.WriteString(`, "TimeStamp": `)
+		buffer.WriteString(`, "TimestampSec": `)
 		buffer.WriteString(strconv.Itoa(input.Timestamp))
+		buffer.WriteString(`, "TimestampNSec": 0`)
 	}
 
 	buffer.WriteString(`}`)
