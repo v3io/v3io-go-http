@@ -146,13 +146,13 @@ type SetObjectInput struct {
 
 type PutItemInput struct {
 	Path       string
-	Condition  *string
+	Condition  string
 	Attributes map[string]interface{}
 }
 
 type PutItemsInput struct {
 	Path       string
-	Condition  *string
+	Condition  string
 	Items      map[string]map[string]interface{}
 }
 
@@ -165,7 +165,7 @@ type UpdateItemInput struct {
 	Path       string
 	Attributes map[string]interface{}
 	Expression *string
-	Condition  *string
+	Condition  string
 }
 
 type GetItemInput struct {

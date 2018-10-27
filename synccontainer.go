@@ -265,7 +265,7 @@ func (sc *SyncContainer) GetItemsCursor(input *GetItemsInput) (*SyncItemsCursor,
 func (sc *SyncContainer) PutItem(input *PutItemInput) error {
 
 	// prepare the query path
-	_, err := sc.putItem(input.Path, putItemFunctionName, input.Attributes, *input.Condition, putItemHeaders, nil)
+	_, err := sc.putItem(input.Path, putItemFunctionName, input.Attributes, input.Condition, putItemHeaders, nil)
 	return err
 }
 
@@ -283,7 +283,7 @@ func (sc *SyncContainer) PutItems(input *PutItemsInput) (*Response, error) {
 
 		// try to post the item
 		_, err := sc.putItem(
-			input.Path+"/"+itemKey, putItemFunctionName, itemAttributes, *input.Condition, putItemHeaders, nil)
+			input.Path+"/"+itemKey, putItemFunctionName, itemAttributes, input.Condition, putItemHeaders, nil)
 
 		// if there was an error, shove it to the list of errors
 		if err != nil {
@@ -315,12 +315,12 @@ func (sc *SyncContainer) UpdateItem(input *UpdateItemInput) error {
 			"UpdateMode": "CreateOrReplaceAttributes",
 		}
 
-		_, err = sc.putItem(input.Path, putItemFunctionName, input.Attributes, *input.Condition, putItemHeaders, body)
+		_, err = sc.putItem(input.Path, putItemFunctionName, input.Attributes, input.Condition, putItemHeaders, body)
 
 	} else if input.Expression != nil {
 
 		_, err = sc.updateItemWithExpression(
-			input.Path, updateItemFunctionName, *input.Expression, *input.Condition, updateItemHeaders)
+			input.Path, updateItemFunctionName, *input.Expression, input.Condition, updateItemHeaders)
 	}
 
 	return err
