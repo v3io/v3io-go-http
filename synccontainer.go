@@ -207,6 +207,10 @@ func (sc *SyncContainer) GetItems(input *GetItemsInput) (*Response, error) {
 		body["Segment"] = input.Segment
 	}
 
+	if input.SortKeyRangeStart != "" {
+		body["SortKeyRangeStart"] = input.SortKeyRangeStart
+	}
+
 	marshalledBody, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -238,10 +242,9 @@ func (sc *SyncContainer) GetItems(input *GetItemsInput) (*Response, error) {
 
 	//validate getItems response to avoid infinite loop
 	if getItemsResponse.LastItemIncluded != "TRUE" && (getItemsResponse.NextMarker == "" || getItemsResponse.NextMarker == input.Marker) {
-		errMsg := fmt.Sprintf("Invalid getItems response: lastItemIncluded=false and nextMarker='%s', " +
+		errMsg := fmt.Sprintf("Invalid getItems response: lastItemIncluded=false and nextMarker='%s', "+
 			"startMarker='%s', probably due to object size bigger than 2M. Query is: %+v", getItemsResponse.NextMarker, input.Marker, input)
-		sc.logger.Error(errMsg)
-		return nil, errors.New(errMsg)
+		sc.logger.Warn(errMsg)
 	}
 
 	getItemsOutput := GetItemsOutput{
@@ -401,7 +404,7 @@ func (sc *SyncContainer) PutRecords(input *PutRecordsInput) (*Response, error) {
 
 		if record.PartitionKey != "" {
 			buffer.WriteString(`, "PartitionKey": `)
-			buffer.WriteString(`"`+record.PartitionKey+`"`)
+			buffer.WriteString(`"` + record.PartitionKey + `"`)
 		}
 
 		// add comma if not last
