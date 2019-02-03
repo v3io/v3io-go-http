@@ -211,6 +211,10 @@ func (sc *SyncContainer) GetItems(input *GetItemsInput) (*Response, error) {
 		body["SortKeyRangeStart"] = input.SortKeyRangeStart
 	}
 
+	if input.SortKeyRangeEnd != "" {
+		body["SortKeyRangeEnd"] = input.SortKeyRangeEnd
+	}
+
 	marshalledBody, err := json.Marshal(body)
 	if err != nil {
 		return nil, err

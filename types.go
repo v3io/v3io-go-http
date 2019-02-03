@@ -190,6 +190,7 @@ type GetItemsInput struct {
 	Segment           int
 	TotalSegments     int
 	SortKeyRangeStart string
+	SortKeyRangeEnd   string
 }
 
 type GetItemsOutput struct {
