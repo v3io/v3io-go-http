@@ -26,12 +26,6 @@ func newContainer(parentLogger logger.Logger, session *Session, alias string) (*
 	}, nil
 }
 
-func (c *Container) ListAll(input *ListAllInput,
-	context interface{},
-	responseChan chan *Response) (*Request, error) {
-	return c.sendRequest(input, context, responseChan)
-}
-
 func (c *Container) ListBucket(input *ListBucketInput,
 	context interface{},
 	responseChan chan *Response) (*Request, error) {

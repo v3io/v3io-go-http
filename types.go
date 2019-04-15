@@ -75,7 +75,9 @@ type RequestResponse struct {
 }
 
 type ListBucketInput struct {
-	Path string
+	Path    string
+	Marker  string
+	MaxKeys int
 }
 
 type Content struct {
@@ -99,6 +101,7 @@ type ListBucketOutput struct {
 	MaxKeys        string         `xml:"MaxKeys"`
 	Contents       []Content      `xml:"Contents"`
 	CommonPrefixes []CommonPrefix `xml:"CommonPrefixes"`
+	IsTruncated    bool           `xml:"IsTruncated"`
 }
 
 type ListAllInput struct {
